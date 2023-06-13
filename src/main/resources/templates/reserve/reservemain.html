@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUBBLE BUMUL</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" />
+    <link rel='stylesheet' th:href="@{/css/home.css}" />
+
+    <!-- font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+
+    <!--탭 아이콘 변경-->
+    <link rel="icon" th:href="@{/images/iconlog.png}">  
+
+    <!-- 한글 font  -->
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square.css" rel="stylesheet">
+    
+        <!--jQuery 추가-->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"
+        integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+
+    <style>
+        /* .washing {border: 1px solid black; word-break: break-all;} */
+
+        .time {border: 1px solid black;}
+        .time:hover, .time:focus {
+            background-color: lightgray;
+        }
+        #timetable button.active {
+            background-color: lightgray;
+        }
+
+        .modal_td {
+            width: 20px;
+            text-align: center;
+        }
+
+        input[type="radio"] {
+            transform: scale(1.5); /* 크기 조절 값, 필요에 따라 조정 가능 */
+        }
+    </style>
+</head>
+<body>
+    <header th:replace="~{/fragments/header.html :: header}"></header>
+    
+    <div class="maincontainer">
+        <div id="pageheader">
+            <div id="pageline"></div>
+            <p id="page">Reserve</p>
+        </div>
+
+        <p id="reservetitle">세탁 예약</p>
+        <p style="color: red; font-weight: bold; text-align: center;">현재 검색 가능한 주소는 부산광역시 남구입니다 </p>
+        <h4 style="margin-left: 350px;">지역 선택</h4>
+        <div class="reserveline"></div>
+        <div id="selectaddress" style="margin-bottom: 50px;">
+            <table style="margin-bottom: 20px;">
+                <tr style="text-align: center;">
+                    <th>지역(시/도)</th>
+                    <th>지역(시/구/군)</th>
+                </tr>
+                <tr>    
+                    <td>
+                        <select id="city" onchange="selectedCity()">
+                            <option value="none">지역(시/도) 선택</option>
+                            <option th:each="city : ${citynamelist}" th:value="${city}" th:text="${city}"></option>
+                        </select>
+                    </td>
+                    <td>
+                        <select id="town"  onchange="selectedtown()">
+                            <option value="none">지역(시/구/군) 선택</option>
+                        </select>
+                    </td>
+                    <td><button type="button" id="myaddress" class="btn btn-secondary" onclick="showMyAddress()">내 주소 불러오기</button></td>
+                    <td><button type="button" id="searchaddress" class="btn btn-dark" onclick="showWahsingList()">조회</button></td>
+                </tr>    
+            </table>
+        </div>
+    
+        <div id="washinglisttable" style="display: none; margin-bottom: 50px;">
+            <h4>세탁 업체 목록</h4>
+            <table id="washingtable">
+            <!-- <table width="900" style="margin-bottom: 20px; border-collapse: collapse; table-layout: fixed; text-align: center;"></table> -->
+                <thead style="background-color: lightgray;">
+                    <tr>
+                        <th width="5%" >선택</th>
+                        <th width="15%" class="second">세탁소</th>
+                        <th width="50%" class="third">주소</th>
+                        <th width="15%" class="forth">전화번호</th>
+                    </tr>
+                </thead>
+                <tbody id="washinglist">
+                </tbody>
+            </table>
+        </div>
+    
+        <br />
+    
+        <div id="selectmachine" style="display: none; margin-bottom: 150px;">
+            <h4 style="margin-left: 345px;">기기 선택</h4>
+            <div class="reserveline1"></div>
+            <div id="choosewashing">
+                <table>
+                    <tr  style="text-align: center;">
+                        <th style="padding-right: 20px;">사용할 기기 종류</th>
+                        <th style="padding-left: 90px;">사용할 기기 번호</th>
+                    </tr>
+                    <tr>    
+                        <td style="padding-left: 5px;">
+                            <select id="machine" style="width: 200px; text-align: center;" onchange="selectedMachine()">
+                                <option value="none">사용할 기기 선택</option>
+                                <option value="세탁기">세탁기</option>
+                                <option value="건조기">건조기</option>
+                                <option value="일체형">일체형</option>
+                            </select>
+                        </td>
+                        <td style=" padding-left: 50px;">
+                            <select id="machineno" style="width: 200px; text-align: center;" onchange="selectedMachineNo()">
+                                <option value="none">기기번호 선택</option>
+                            </select>
+                        </td>
+                    </tr>    
+                </table>
+            </div>
+        </div>
+    
+        <br />
+    
+        <div id="selectdate" style="display: none;" class="container">
+            <h4>예약 날짜 및 시간 선택</h4>
+            <div class="reserveline2"></div>
+            <div class="rvdatetime">
+                <input type="date" id="date" onchange="selectedDate()"/>
+        
+                <br />
+        
+                <div class="row" style="width: 1000px;">
+                    <div id="timetable" class="col col-4" style="width: 800px; display: inline-block;"></div>
+                </div>
+
+                <br />
+
+            </div>
+            <div id="reserve" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- 예약하기 버튼을 누르면 나오는 모달창 -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">예약 확인</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table>
+                        <tr>
+                            <td>세탁소</td>
+                            <td class="modal_td"> : </td>
+                            <td id="modal_wname"></td>
+                        </tr>
+                        <tr>
+                            <td>주소</td>
+                            <td class="modal_td"> : </td>
+                            <td id="modal_waddress"></td>
+                        </tr>
+                        <tr>
+                            <td>전화번호</td>
+                            <td class="modal_td"> : </td>
+                            <td id="modal_wphone"></td>
+                        </tr>
+                        <tr>
+                            <td>기기 종류</td>
+                            <td class="modal_td"> : </td>
+                            <td id="modal_machine"></td>
+                        </tr>
+                        <tr>
+                            <td>기기 번호</td>
+                            <td class="modal_td"> : </td>
+                            <td id="modal_machineno"></td>
+                        </tr>
+                        <tr>
+                            <td>이용일</td>
+                            <td class="modal_td"> : </td>
+                            <td id="modal_rvdate"></td>
+                        </tr>
+                        <tr>
+                            <td>사용 시간</td>
+                            <td class="modal_td"> : </td>
+                            <td id="modal_rvtime"></td>
+                        </tr>
+                        <tr>
+                            <td>가격</td>
+                            <td class="modal_td"> : </td>
+                            <td id="modal_price"></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-dark" onclick="reservePay()">결제</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{/fragments/footer.html :: footer}"></footer>
+
+    <!-- iamport.payment.js -->
+    <script type="text/javascript" src="https://cdn.iamport.kr/js/iamport.payment-1.2.0.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.3.5/axios.min.js"></script>
+    <script th:inline="javascript" type="text/javascript">
+        const washinglisttable = document.getElementById("washinglisttable");
+        const selectmachine = document.getElementById("selectmachine");
+        const selectdate = document.getElementById('selectdate');
+        const date = document.getElementById('date');
+        const timetable = document.getElementById('timetable');
+        const reserve = document.getElementById('reserve');
+
+        async function selectedCity() {
+            washinglisttable.style.display="none";
+            selectmachine.style.display="none";
+            selectdate.style.display="none";
+            reserve.style.display="none";
+            
+            const city = $("#city option:selected").val();
+            
+            // rest api 호출
+            const url = [[@{/api/reserve/selectedcity.json}]] + `?city=${city}`;
+            const headers = {"Content-Type":"application/json"};
+            const {data} = await axios.get(url, {headers});
+
+            // console.log(data.town);
+
+            if (data.town.length > 0) {
+                const town = document.getElementById("town");
+                town.innerHTML = '';
+                town.innerHTML = '<option value="none">지역(시/구/군) 선택</option>';
+
+                for (let obj of data.town) {
+                    town.innerHTML += "<option value=" + obj + ">" + obj + "</option>";
+                }
+            }
+        }
+
+        function selectedtown() {
+            washinglisttable.style.display="none";
+            selectmachine.style.display="none";
+            selectdate.style.display="none";
+            reserve.style.display="none";
+        }
+
+        async function showMyAddress() {
+            washinglisttable.style.display="none";
+            selectmachine.style.display="none";
+            selectdate.style.display="none";
+            reserve.style.display="none";
+
+            // rest api 호출
+            const url = [[@{/api/reserve/myaddress.json}]];
+            const headers = {"Content-Type":"application/json"};
+            const {data} = await axios.get(url, {headers});
+
+            // console.log(data.cityname);
+            // console.log(data.townlist);
+            // console.log(data.townname);
+
+            if (data.cityname == null || data.townlist == null || data.townname == null) {
+                alert('회원정보에 주소가 없습니다.\n마이페이지에서 주소를 추가한 후 이용해주세요.');
+                location.href = [[@{/customer/mypage.bubble?menu=2}]];
+            }
+            else {
+                $("#city").val(data.cityname).prop("selected", true);
+
+                const town = document.getElementById("town");
+                town.innerHTML = '';
+                town.innerHTML = '<option value="none">지역(시/구/군) 선택</option>';
+
+                for (let obj of data.townlist) {
+                    town.innerHTML += "<option value=" + obj + ">" + obj + "</option>";
+                }
+                
+                $("#town").val(data.townname).prop("selected", true);
+            }
+        }
+
+        async function showWahsingList() {
+            selectmachine.style.display="none";
+            selectdate.style.display="none";
+            reserve.style.display="none";
+
+            const city = $("#city option:selected").val();
+            const town = $("#town option:selected").val();
+            $('input[name="wnumber"]').removeAttr("checked"); 
+
+            // rest api 호출
+            const url = [[@{/api/reserve/washinglist.json}]] + `?city=${city}&town=${town}`;
+            const headers = {"Content-Type":"application/json"};
+            const {data} = await axios.get(url, {headers});
+            
+            // console.log(data.washinglist);
+
+            if (city == "none") {
+                alert('지역(시/도)를 선택해주세요.');
+                document.getElementById("city").focus();
+            }
+            else if (town == "none"){
+                alert('지역(시/구/군)을 선택해주세요.');
+                document.getElementById("town").focus();
+            }
+            else {
+                if (data.washinglist.length == 0) {
+                    alert('예약 가능한 세탁소가 존재하지 않습니다.\n다른 지역을 선택해주세요.');
+                    $("#city").val("none").prop("selected", true);
+                    $("#town").val("none").prop("selected", true);
+                    // // washinglisttable.innerHTML = '';
+                    // washinglisttable.style.display="none";
+                }
+                else {
+                    const washinglist = document.getElementById("washinglist");
+                    washinglist.innerHTML = '';
+
+                    for (let i=0; i<data.washinglist.length; i++){
+                        // console.log(data.washinglist[i].name);
+                        washinglist.innerHTML += `<tr>`
+                                                    + '<td class="washing"><input type="radio" onclick="selectwashinglist()" name="wnumber" value="' + data.washinglist[i].wnumber + '"/></td>' 
+                                                    + '<td class="washing">' + data.washinglist[i].name + '</td>'
+                                                    + '<td class="washing">' + data.washinglist[i].address + '</td>'
+                                                    + '<td class="washing">' + data.washinglist[i].phone + '</td>'
+                                                    + `</tr>`
+                                                    ;
+                    }
+
+                    washinglisttable.style.display="inline-block";
+                }
+            }
+        }
+
+        function selectwashinglist() {
+            // washinglisttable.style.display="none";
+            selectmachine.style.display="none";
+            selectdate.style.display="none";
+            reserve.style.display="none";
+
+            $("#machine").val("none").prop("selected", true);
+            $("#machineno").val("none").prop("selected", true);
+
+            // const wnumber = $('input[name="wnumber"]:checked').val();
+
+            selectmachine.style.display="inline-block";
+        }
+
+        async function selectedMachine() {
+            const machineno = document.getElementById("machineno");
+            machineno.innerHTML = '<option value="none">기기번호 선택</option>';
+
+            selectdate.style.display="none";
+            reserve.style.display="none";
+
+            const wnumber = $('input[name="wnumber"]:checked').val();
+            const machine = $("#machine option:selected").val();
+
+            // rest api 호출
+            const url = [[@{/api/reserve/selectedmachine.json}]] + `?wnumber=` + wnumber + `&machine=` + machine;
+            const headers = {"Content-Type":"application/json"};
+            const {data} = await axios.get(url, {headers});
+
+            // console.log(data.typeno);
+
+            if (data.typeno.length <= 0) {
+                if (machine === "일체형"){
+                    alert('사용가능한 ' + machine + '이 없습니다.\n다른 기기를 사용해주세요.');
+                }
+                else if (machine === "none") {
+                    alert('기기를 선택해주세요.');
+                    document.getElementById("machine").focus();
+                }
+                else {
+                    alert('사용가능한 ' + machine + '가 없습니다.\n다른 기기를 사용해주세요.');
+                }
+            }
+            else {
+                machineno.innerHTML = '';
+                machineno.innerHTML = '<option value="none">기기번호 선택</option>';
+
+                for (let obj of data.typeno) {
+                    machineno.innerHTML += "<option value=" + obj + ">" + obj + "번" + "</option>";
+                }
+            }
+        }
+
+        function selectedMachineNo() {
+            timetable.style.display="none";
+            reserve.style.display="none";
+            date.value = null;
+            
+            var now = new Date(); // 현재 날짜
+            // date.value = now.toISOString().slice(0, 10);
+            
+            // 현재 날짜 기준 당일과 이전은 예약 불가능하게
+            var min = new Date(now.setDate(now.getDate() + 1));
+            date.min = min.toISOString().slice(0, 10);
+            
+            // 현재 날짜 ~ 일주일 이내로만 예약 가능하게
+            var max = new Date(now.setDate(now.getDate() + 6));
+            date.max = max.toISOString().slice(0, 10);
+
+            selectdate.style.display="inline-block";
+        }
+
+        let rvtime = '';
+        async function selectedDate() {
+            const wnumber = $('input[name="wnumber"]:checked').val();
+            const machine = $("#machine option:selected").val();
+            const machineno = $("#machineno option:selected").val();
+            rvtime = '';
+
+            // 선택된 날짜 출력
+            // console.log(date.value);
+            // console.log(date.value.length);
+            if (date.value.length == 10) {
+                // // rest api 호출
+                const url = [[@{/api/reserve/selecteddate.json}]] + `?wnumber=` + wnumber + `&machine=` + machine + `&machineno=` + machineno + `&rvdate=` + date.value;
+                const headers = {"Content-Type":"application/json"};
+                const {data} = await axios.get(url, {headers});
+
+                // console.log(data.useable);
+
+                if (data.useable.length > 0) {
+                    timetable.innerHTML = '';
+                    reserve.innerHTML = '';
+                    reserve.innerHTML += `<input type="button" value="결제하기" id="paybtn" class="btn btn-dark" onclick="reserveAction()" />`;
+
+                    for (let obj of data.useable) {
+                        // if(){
+                        //     timetable.innerHTML += `<button type="button" dis>` + obj + `</button>`;    
+                        // }
+                        // else{
+                        //     timetable.innerHTML += `<button type="button">` + obj + `</button>`;
+                        // }
+                        timetable.innerHTML += `<button type="button" name="time" onclick="selectedtime(this)" style="padding: 10px 20px; margin: 15px;" class="btn time" value="` + obj + `">` + obj + `</button>`;
+                    }
+
+                    timetable.style.display="inline-block";
+                    reserve.style.display="inline-block";
+                }
+            }
+        }
+
+        function selectedtime(time) {
+            $(".time").removeClass("active"); // 버튼 여러개 선택되는거 방지
+
+            // document.getElementsByClassName("time").classList.remove("active");
+            time.classList.add("active");
+
+            // 선택된 시간 값
+            // console.log($(time).val());
+            rvtime = $(time).val();
+            // console.log(rvtime);
+        }
+
+        async function reserveAction() {
+            const wnumber = $('input[name="wnumber"]:checked').val();
+            const machine = $("#machine option:selected").val();
+            const machineno = $("#machineno option:selected").val();
+            const rvdate = document.getElementById("date").value;
+
+            if (rvdate.length <= 0) {
+                alert('예약일을 선택해주세요.')
+                date.focus();
+            }
+            else if (rvtime.length <= 0) {
+                alert('예약 시간을 선택해주세요.');
+            }
+            else if (rvdate.length == 10 && rvtime.length > 0){
+                document.getElementById("paybtn").setAttribute("data-bs-toggle", "modal");
+                document.getElementById("paybtn").setAttribute("data-bs-target", "#exampleModal");
+
+                // // rest api 호출
+                const url = [[@{/api/reserve/reservecheck.json}]] + `?wnumber=` + wnumber + `&machine=` + machine + `&machineno=` + machineno; 
+                const headers = {"Content-Type":"application/json"};
+                const {data} = await axios.get(url, {headers});
+
+                // console.log(data);
+
+                document.getElementById("modal_wname").innerText = data.wname;
+                document.getElementById("modal_waddress").innerText = data.waddress;
+                document.getElementById("modal_wphone").innerText = data.wphone;
+                document.getElementById("modal_machine").innerText = machine;
+                document.getElementById("modal_machineno").innerText = machineno + "번";
+                document.getElementById("modal_rvdate").innerText = rvdate;
+                document.getElementById("modal_rvtime").innerText = rvtime;
+                document.getElementById("modal_price").innerText = data.price;
+            }
+            
+            // console.log(wnumber);
+            // console.log(machine);
+            // console.log(machineno);
+            // console.log(rvdate);
+            // console.log(rvtime);
+        }
+
+        // 결제 - 주문번호(현재 날짜 포맷)
+        function dateFormat(date) {
+            let year = date.getFullYear();
+            let month = date.getMonth() + 1;
+            let day = date.getDate();
+            let hour = date.getHours();
+            let minute = date.getMinutes();
+            let second = date.getSeconds();
+
+            month = month >= 10 ? month : '0' + month;
+            day = day >= 10 ? day : '0' + day;
+            hour = hour >= 10 ? hour : '0' + hour;
+            minute = minute >= 10 ? minute : '0' + minute;
+            second = second >= 10 ? second : '0' + second;
+
+            return year + month + day + hour + minute + second;
+        }
+
+        var IMP = window.IMP; 
+        IMP.init('imp25874502');
+        // 모달창 - 결제버튼
+        function reservePay() {            
+            // 주문번호 => 현재날짜및시간_이용일사용시간
+            let rvno = '';
+            
+            var now = new Date(); // 현재 날짜 및 시간
+            // console.log(dateFormat(now));
+            
+            const rvnodate = document.getElementById("date").value;
+            let rvdatesplit = rvnodate.slice(2, 10).split('-');
+            let rvdates = '';
+            for (let i=0; i<rvdatesplit.length; i++) {
+                rvdates += rvdatesplit[i];
+            }
+
+            let rvtimesplit = rvtime.split(':');
+            let rvtimes = '';
+            for (let j=0; j<rvtimesplit.length; j++) {
+                rvtimes += rvtimesplit[j];
+            }
+
+            rvno = dateFormat(now).slice(2, 14) + "_" + rvdates + rvtimes;
+            console.log(rvno);
+
+            // ----------------------------------------------------------
+            
+            const wnumber = $('input[name="wnumber"]:checked').val();
+            const machine = $("#machine option:selected").val();
+            const machineno = $("#machineno option:selected").val();
+            const rvdate = document.getElementById("date").value;
+            
+            // ----------------------------------------------------------
+
+            if ([[${customer.phone}]] != null) {
+                var result = '';
+                //가맹점 식별코드
+                IMP.request_pay({
+                    pg: "html5_inicis",
+                    pay_method: "card",
+                    merchant_uid: rvno, // 주문번호(고유)
+                    name: machine, // 상품명
+                    amount: 100,
+                    buyer_email: [[${customer.email}]], // 로그인한 고객의 이메일
+                    buyer_name: [[${customer.name}]], // 로그인한 고객의 이름
+                    buyer_tel: [[${customer.phone}]]
+                }, function(rsp) {
+                    console.log(rsp);
+                    if ( rsp.success ) {
+                        result = 1;
+                        var msg = '결제가 완료되었습니다.\n';
+                        // msg += '고유ID : ' + rsp.imp_uid;
+                        msg += '주문번호 : ' + rsp.merchant_uid;
+                        msg += '\n결제 금액 : ' + rsp.paid_amount + "원";
+                        // msg += '카드 승인번호 : ' + rsp.apply_num;
+
+                        alert(msg);
+                    } else {
+                        result = 0;
+                        // var msg = '결제에 실패하였습니다.';
+                        // msg += '에러내용 : ' + rsp.error_msg;
+                    }
+
+                    // 예약
+                    if (result == 1) {
+                        const form = document.createElement("form");
+                        form.setAttribute("action", [[@{/reserve/letsgo.bubble}]]);
+                        form.setAttribute("method", "post");
+                        form.style.display="none";
+
+                        const input1 = document.createElement("input");
+                        input1.setAttribute("type", "hidden");
+                        input1.setAttribute("name", "wnumber");
+                        input1.setAttribute("value", wnumber);
+
+                        const input2 = document.createElement("input");
+                        input2.setAttribute("type", "hidden");
+                        input2.setAttribute("name", "machine");
+                        input2.setAttribute("value", machine);
+
+                        const input3 = document.createElement("input");
+                        input3.setAttribute("type", "hidden");
+                        input3.setAttribute("name", "machineno");
+                        input3.setAttribute("value", machineno);
+
+                        const input4 = document.createElement("input");
+                        input4.setAttribute("type", "hidden");
+                        input4.setAttribute("name", "rvdate");
+                        input4.setAttribute("value", rvdate);
+
+                        const input5 = document.createElement("input");
+                        input5.setAttribute("type", "hidden");
+                        input5.setAttribute("name", "rvtime");
+                        input5.setAttribute("value", rvtime);
+
+                        const input6 = document.createElement("input");
+                        input6.setAttribute("type", "hidden");
+                        input6.setAttribute("name", "rvno");
+                        input6.setAttribute("value", rvno);
+
+                        const input7 = document.createElement("input");
+                        input7.setAttribute("type", "hidden");
+                        input7.setAttribute("name", "_csrf");
+                        input7.setAttribute("value", [[${_csrf.token}]]);
+
+                        form.appendChild(input1);
+                        form.appendChild(input2);
+                        form.appendChild(input3);
+                        form.appendChild(input4);
+                        form.appendChild(input5);
+                        form.appendChild(input6);
+                        form.appendChild(input7);
+
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            }
+            else {
+                alert('마이페이지로 이동 후 회원정보에 전화번호를 추가해주세요.');
+                location.href = [[@{/customer/mypage.bubble?menu=2}]];
+            }
+        }
+    </script>
+</body>
+</html>

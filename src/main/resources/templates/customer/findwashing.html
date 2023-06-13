@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUBBLE BUMUL</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" />
+    <link rel='stylesheet' th:href="@{/css/home.css}" />
+    <!--탭 아이콘 변경-->
+    <link rel="icon" th:href="@{/images/iconlog.png}">  
+
+    <!-- font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geologica:wght@100;200;300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <!-- 한글 font  -->
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square.css" rel="stylesheet">
+
+    <!--1. BootStrap용 CSS CDM 추가-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
+
+    <!--jQuery 추가-->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"
+        integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <header th:replace="~{/fragments/header.html :: header}"></header>
+
+    <div class="maincontainer">
+        <div id="pageheader">
+            <div id="pageline"></div>
+            <p id="page"><a th:href="@{/customer/home.bubble}" style="text-decoration: none; color: black;">Find Laundry</a></p>
+        </div>
+        <p id="reservetitle">내 주변 세탁방 찾기</p>
+        <div id="washingdetail">
+            <div id="map"></div>
+            <div id="detailline"></div>
+            <div id="washinginfo"></div>
+        </div>
+    </div>
+
+    <footer th:replace="~{/fragments/footer.html :: footer}"></footer>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.3.5/axios.min.js"></script>
+
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f761a223ea6f6b6f19c7d7cb193bdc41&libraries=services,clusterer,drawing"></script>
+    <!-- <script type="text/javascript"
+        src="//dapi.kakao.com/v2/maps/sdk.js?appkey=51de80643ee3e6de36c332711a96b13b&libraries=services,clusterer,drawing"></script> -->
+    <script th:inline="javascript" type="text/javascript">
+        // console.log([[${address}]]);
+        // console.log([[${washingList}]]);
+
+        // controller에서 받아온 같은 지역(시/도)&지역(구/군) 내의 세탁소 리스트
+        var washingList = [[${ washingList }]];
+
+        var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
+            mapOption = {
+                center: new kakao.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
+                level: 4 // 지도의 확대 레벨
+            };
+
+        // 지도를 생성합니다    
+        var map = new kakao.maps.Map(mapContainer, mapOption);
+
+        // 주소-좌표 변환 객체를 생성합니다
+        var geocoder = new kakao.maps.services.Geocoder();
+
+        // 주소로 좌표를 검색합니다
+        // 중심 좌표로 사용할 주소를 좌표로 변환하고 마커를 표시합니다
+        geocoder.addressSearch([[${ address }]], function (result, status) {
+            if (status === kakao.maps.services.Status.OK) {
+                var centerPosition = new kakao.maps.LatLng(result[0].y, result[0].x);
+
+                // 중심 좌표에 노란색 마커를 생성합니다
+                var centerMarker = new kakao.maps.Marker({
+                    position: centerPosition,
+                    image: new kakao.maps.MarkerImage(
+                        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
+                        new kakao.maps.Size(24, 35),
+                        {
+                            offset: new kakao.maps.Point(12, 35),
+                            alt: '중심 좌표 마커',
+                        }
+                    ),
+                });
+
+                // 중심 좌표에 마커를 표시합니다
+                centerMarker.setMap(map);
+                map.setCenter(centerPosition);
+            }
+        });
+
+        // 인포윈도우 객체를 저장할 변수
+        var currentInfowindow = null;
+
+        // 각 위치에 대해 주소를 좌표로 변환하고 마커를 표시합니다
+        washingList.forEach(function (position) {
+            geocoder.addressSearch(position.address, function (result, status) {
+                if (status === kakao.maps.services.Status.OK) {
+                    var markerPosition = new kakao.maps.LatLng(result[0].y, result[0].x);
+
+                    // 마커를 생성합니다
+                    var marker = new kakao.maps.Marker({
+                        position: markerPosition,
+                    });
+
+                    // 마커를 지도에 표시합니다
+                    marker.setMap(map);
+
+                    // 마커 클릭 이벤트를 추가합니다
+                    kakao.maps.event.addListener(marker, 'click', function () {
+                        // 이전에 열린 인포윈도우가 있다면 닫기
+                        if (currentInfowindow) {
+                            currentInfowindow.close();
+                        }
+
+                        // 인포윈도우 내용을 설정합니다
+                        var infowindowContent = `
+                                        <div style="width: 300px; text-align: center; white-space: nowrap;">
+                                            <strong>${position.name}</strong>
+                                        </div>`;
+
+                        var washinginfo = `<div id="washingbox">
+                                    <p><span id="washingname">세탁소명</span><br>${position.name} </p>
+                                    <p><span id="washingname">주소</span><br>${position.address} </p>
+                                    <p><span id="washingname">전화번호</span><br>${position.phone} </p>
+                                    </div>`;
+
+                        // 인포윈도우를 생성합니다
+                        var infowindow = new kakao.maps.InfoWindow({
+                            content: infowindowContent,
+                        });
+
+                        // 인포윈도우를 마커 위치에 표시합니다
+                        infowindow.open(map, marker);
+
+                        document.getElementById("washinginfo").innerHTML = washinginfo;
+
+                        // 현재 열린 인포윈도우를 저장합니다
+                        currentInfowindow = infowindow;
+                    });
+                }
+            });
+        });
+
+        // 다른 곳을 클릭하면 인포윈도우를 닫습니다
+        kakao.maps.event.addListener(map, 'click', function () {
+            if (currentInfowindow) {
+                currentInfowindow.close();
+            }
+        });
+    </script>
+</body>
+
+</html>

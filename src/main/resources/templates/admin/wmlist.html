@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUBBLE BUMUL</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <!--1. BootStrap용 CSS CDN 추가-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
+
+    <!-- FontAwesome 아이콘 css CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <!-- Simple DataTable용 CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
+    <!--3. BootStrap Icon / font-awesome 아이콘용 CDN-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel='stylesheet' th:href="@{/css/main.css}" />
+    <!-- font -->
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square.css" rel="stylesheet">
+
+    <!--jQuery 추가-->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"
+        integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+    <!-- font awesome 용 스크립트 CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"
+        integrity="sha512-fD9DI5bZwQxOi7MhYWnnNPlvXdp/2Pj3XSTRrFs5FQa4mizyGLnJcN6tuvUS6LbmgN1ut+XGSABKvjN0H6Aoow=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script th:inline="javascript">
+        $(document).ready(function () {
+            const sidebarToggle = $('#sidebarToggle');
+            if (sidebarToggle) {
+                sidebarToggle.click(function () {
+                    console.log('버튼클릭');
+                    event.preventDefault(); /* 아래쪽 요소로 이벤트가 전파 안되도록 */
+                    document.body.classList.toggle('sb-sidenav-toggled');
+                    localStorage.setItem('sb|sidebar-toggle', document.body.classList.contains('sb-sidenav-toggled'));
+                });
+            }
+        });
+    </script>
+
+</head>
+
+
+<body>
+    <!-- top nav -->
+    <header th:replace="~{/admin/adheader.html :: header}"></header>
+    <!-- 전체 화면 영역 -->
+    <div id="layoutTotal">
+        <!-- side menu -->
+        <div th:replace="~{/admin/adsidemenu.html :: side}"></div>
+
+
+        <!-- 전체화면 / 오른쪽 메인화면 영역 -->
+        <div id="layoutContent">
+            <main>
+                <div class="container-fluid px-4">
+                    <a th:href="@{/admin/washinglist.bubble}">
+                        < 뒤로가기 </a>
+                            <h1 class="mt-4" th:text="${name}"></h1>
+                            <ol class="breadcrumb mb-4">
+                                <li class="breadcrumb-item active"> 업체 현황</li>
+                            </ol>
+                            <!-- 카드영역 -->
+                            <div  >
+                                <div class="row">
+                                    <div class="col-lg-3 cld-md-3">
+                                        <div class="card  text-black mb-4">
+                                            <div class="card-body" style="margin-left: 120px;">보유기기 목록 </div>
+                                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                                <table id="datatableSimple" style=" text-align: center; margin-left: 100px;">
+                                                    <thead>
+                                                        <tr>
+                                                            <td>보유 기기</td>
+                                                            <td>ㅣ</td>
+                                                            <td>기기 수(대)</td>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody th:each="obj: ${list}">
+                                                        <td th:text="${obj.type}"></td>
+                                                        <td></td>
+                                                        <td th:text="${obj.count}"></td>
+                                                    </tbody>
+
+                                                </table>
+
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 cld-md-3">
+                                        <div class="card  text-black mb-4">
+                                            <div class="card-body" style="margin-left: 120px;">오늘 예약 건 수</div>
+                                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                                <h1 class="mt-2" th:text="|${rvcount}건|" style="margin-left: 140px;"></h1>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 cld-md-3">
+                                        <div class="card  text-black mb-4">
+                                            <div class="card-body" style="margin-left: 100px;">가장 많이 사용되는 기기</div>
+                                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                                <h1 class="mt-2" th:text="|${topMachine}|" style="margin-left: 120px;"></h1>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                
+
+                            </div>
+                            <!-- 차트영역 -->
+
+                            <div class="row">
+                                <div class=" col-lg-6 cld-md-3">
+                                    <div class="card mb-4">
+                                        <div class="card-header">
+                                                <i class="bi bi-graph-up-arrow me-3"></i>
+                                                일 매출 그래프
+                                        </div>
+                                        <div class="card-body">
+                                                <canvas id="myBarChart" width="80%" height="30"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class=" col-lg-6 cld-md-3">
+                                    <div class="card mb-4">
+                                        <div class="card-header">
+                                                <i class="bi bi-graph-up-arrow me-3"></i>
+                                                월별 매출 그래프
+                                        </div>
+                                        <div class="card-body">
+                                                <canvas id="myBarMonthChart" width="80%" height="30"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                </div>
+            </main>
+
+
+
+            <footer th:replace="~{/admin/adfooter.html :: footer}"></footer>
+        </div>
+
+
+
+
+    </div>
+
+    <!--2. BootStrap용 JS는 body태그 내 맨 아래에 위치해야 함-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N"
+        crossorigin="anonymous"></script>
+    <!-- Chart.js용 CDN  구버전에서 신버전으로 컨버전작업 필요 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
+    <script src="/src/main/resources/static/js/chart-area-demo.js" th:inline="javascript"></script>
+    <script src="/src/main/resources/static/js/chart-bar-demo.js" th:inline="javascript"></script>
+    <script src="/src/main/resources/static/js/chart-pie-demo.js" th:inline="javascript"></script>
+    <!-- Simple DataTable용 JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
+    <script th:inline="javascript" type="text/javascript">
+        $(document).ready(function () {
+            new simpleDatatables.DataTable("#datatableSimple", {
+                searchable: true,
+                fixedHeight: true,
+            });
+        });
+
+
+        //일 매출
+        var salesData = [[${ mdlist }]];
+
+        //확인용
+        // for(let i=0; i<salesData.length; i++) {
+        //     console.log(salesData[i].RVDAY);
+        //     console.log(salesData[i].MTOTAL);
+        // }
+
+
+        //매출액
+        var total = salesData.map(function (monthlydate) {
+            return monthlydate.MTOTAL;
+        });
+
+        //년-달-일
+        var labels = salesData.map(function (monthlydate) {
+            return monthlydate.RVDAY;
+        });
+
+        console.log(total);
+        console.log(labels);
+
+
+        //    차트
+        var ctx = document.getElementById("myBarChart").getContext('2d');
+
+        var myBarChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "일 별 매출",
+                    backgroundColor: "rgba(2,117,216,0.5)",
+                    borderColor: "rgba(2,117,216,1)",
+                    data: total,
+                }],
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        barPercentage: 0.5, // 막대 두께 비율
+                        categoryPercentage: 0.9, // 그룹(카테고리) 너비 비율
+                        time: {
+                            unit: 'month'
+                        },
+                        gridLines: {
+                            display: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 15
+                        }
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            max : 50000,
+                            beginAtZero: true, //0부터 시작하게 함
+                            fontSize: 14,
+                            stepSize: 5000 // 100원 단위로
+                        }
+                    }]
+                }
+            }
+        });
+
+
+
+    //월별 매출
+    var salesMonthData = [[${ mlist }]];
+    
+        //확인용
+        // for(let i=0; i<salesData.length; i++) {
+        //     console.log(salesData[i].RVDAY);
+        //     console.log(salesData[i].MTOTAL);
+        // }
+
+
+        //매출액
+        var total = salesMonthData.map(function (monthly) {
+            return monthly.MTOTAL;
+        });
+
+        //년-달-일
+        var labels = salesMonthData.map(function (monthly) {
+            return monthly.RVDAY;
+        });
+
+        console.log(total);
+        console.log(labels);
+
+
+        //    차트
+        var ctx = document.getElementById("myBarMonthChart").getContext('2d');
+
+        var myBarMonthChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "월 별 매출",
+                    backgroundColor: "rgba(2,117,216,0.5)",
+                    borderColor: "rgba(2,117,216,1)",
+                    data: total,
+                }],
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        barPercentage: 0.5, // 막대 두께 비율
+                        categoryPercentage: 0.9, // 그룹(카테고리) 너비 비율
+                        time: {
+                            unit: 'month'
+                        },
+                        gridLines: {
+                            display: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 15
+                        }
+                    }],
+
+                    yAxes: [{
+                        ticks: {
+                            max : 50000,
+                            beginAtZero: true, //0부터 시작하게 함
+                            fontSize: 14,
+                            stepSize: 5000 // 100원 단위로
+                        }
+                    }]
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

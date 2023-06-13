@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUBBLE BUMUL</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" />
+    <link rel='stylesheet' th:href="@{/css/home.css}" />
+    <!--탭 아이콘 변경-->
+    <link rel="icon" th:href="@{/images/iconlog.png}">   
+
+    <!-- font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- 한글 font  -->
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square.css" rel="stylesheet">
+
+    <style>
+        .tdc {
+            width: 40px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header th:replace="~{/fragments/header.html :: header}"></header>
+
+    <div class="maincontainer">
+        <div id="pageheader">
+            <div id="pageline"></div>
+            <p id="page"><a th:href="@{/customer/mypage.bubble?menu=1}" style="text-decoration: none; color: black;">Reserve</a></p>
+        </div>
+        <p id="reservetitle">예약 상세 내역</p>
+
+            <div class="reservedetailbox">
+                <div id="map"></div>
+                <div id="detailline"></div>
+                <div th:each="one : ${reserveOne}" id="reservedetailbox1">
+                        <span>예약 번호</span>
+                        <p th:text="${one.rvno}"></p>
+                        <span>세탁소</span>
+                        <p th:text="${one.wname}"></p>
+                        <span>세탁소 주소</span>
+                        <p th:text="${one.waddress}"></p>
+                        <span>세탁소 연락처</span>
+                        <p th:text="${one.wphone}"></p>
+
+                        <span>이용일</span>
+                        <p id="rvdate"></p>
+                        <span>예약 시간</span>
+                        <p id="rvtime"></p>
+                    </div>
+                    <div th:each="obj :${reserveOne}" id="reservedetailbox2">
+                        <span>기기 종류</span>
+                        <p th:text="${obj.mtype}"></p>
+                        <span>기기 번호</span>
+                        <p th:text="|${obj.mtypeno}번|"></p>
+                        <span>이용 요금</span>
+                        <p th:text="|${obj.mprice}원|"></p>
+                        <span>작동 시간</span>
+                        <p th:text="|${obj.mtime}분|"></p>
+
+                        <span>예약 현황</span>
+                        <p th:text="${obj.state}"></p>
+                        <div th:if="${reserveOne.state == '예약 완료'}">
+                            <input type="button" value="예약 취소" onclick="reserveCancel()" class="btn btn-dark" style="margin-top: 10px;"/>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{/fragments/footer.html :: footer}"></footer>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
+
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f761a223ea6f6b6f19c7d7cb193bdc41&libraries=services,clusterer,drawing"></script>
+    <!-- <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=51de80643ee3e6de36c332711a96b13b&libraries=services,clusterer,drawing"></script> -->
+    <script th:inline="javascript" type="text/javascript">
+        // console.log([[${reserveOne.waddress}]]);
+
+        var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
+		    mapOption = {
+		        center: new kakao.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
+		        level: 3 // 지도의 확대 레벨
+		    };  
+		
+		// 지도를 생성합니다    
+		var map = new kakao.maps.Map(mapContainer, mapOption); 
+		
+		// 주소-좌표 변환 객체를 생성합니다
+		var geocoder = new kakao.maps.services.Geocoder();
+		
+		// 주소로 좌표를 검색합니다
+		geocoder.addressSearch([[${reserveOne.waddress}]], function(result, status) {
+		
+		    // 정상적으로 검색이 완료됐으면 
+		     if (status === kakao.maps.services.Status.OK) {
+		
+		        var coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+		
+		        // 결과값으로 받은 위치를 마커로 표시합니다
+		        var marker = new kakao.maps.Marker({
+		            map: map,
+		            position: coords
+		        });
+		
+		        // 지도의 중심을 결과값으로 받은 위치로 이동시킵니다
+		        map.setCenter(coords);
+		    } 
+		});
+    </script>
+    <script th:inline="javascript" type="text/javascript">
+        // 예약일
+        let rvdate = [[${reserveOne.rvdate}]];
+        // console.log(rvdate);
+
+        let rvdatesplit = rvdate.split('-');
+        // for (let i=0; i<rvdatesplit.length; i++) {
+        //     console.log(rvdatesplit[i]);
+        // }
+
+        let year = rvdatesplit[0];
+        let month = parseInt(rvdatesplit[1]);
+        let day = parseInt(rvdatesplit[2]);
+        let formattedDate = year + '년 ' + month + '월 ' + day + '일';
+        // console.log(formattedDate);
+
+        document.getElementById("rvdate").textContent = formattedDate;
+
+        // ----------------------------------------------------------------------
+
+        // 예약 시간
+        let rvtime = [[${reserveOne.rvtime}]];
+        
+        let rvtimesplit = rvtime.split(':');
+
+        let hour = rvtimesplit[0];
+        let minute = rvtimesplit[1];
+        let formattedTime = hour + '시 ' + minute + '분';
+
+        document.getElementById("rvtime").textContent = formattedTime;
+
+        // ----------------------------------------------------------------------
+
+        function reserveCancel() {
+            // console.log([[${reserveOne.rvno}]]);
+            const currentDate = new Date();
+
+            if (confirm(formattedDate + " " + formattedTime + " 예약을 취소하시겠습니까?")) {
+                if (currentDate.toISOString().slice(0, 10) < rvdate) {
+                    const form = document.createElement("form");
+                    form.setAttribute("action", [[@{/customer/reservecancel.bubble}]]);
+                    form.setAttribute("method", "post");
+                    form.style.display="none";
+
+                    const input1 = document.createElement("input");
+                    input1.setAttribute("type", "hidden");
+                    input1.setAttribute("name", "rvno");
+                    input1.setAttribute("value", [[${reserveOne.rvno}]]);
+
+                    const input2 = document.createElement("input");
+                    input2.setAttribute("type", "hidden");
+                    input2.setAttribute("name", "_csrf");
+                    input2.setAttribute("value", [[${_csrf.token}]]);
+
+                    form.appendChild(input1);
+                    form.appendChild(input2);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+                else if (currentDate.toISOString().slice(0, 10) == rvdate) {
+                    alert('예약 당일에는 취소가 불가능합니다.');
+                }
+                else {
+                    alert('예약 당일 이후로는 취소가 불가능합니다.');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
